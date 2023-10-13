@@ -46,3 +46,17 @@ To Run:
 if __name__ == "__main__":
     main()
 ```
+Click to open the Telegram Bot:
+```python
+t.me/AI_Task_Manager_Bot
+```
+Use commands:
+- /start: Start the AI Task Manager.
+- /help: Show available commands.
+- /add_task: Add a new task (e.g., /add_task Buy groceries, 2023-12-31, 2)
+- /list_tasks: List tasks.
+- /delete_task: Delete a task by ID (e.g., /delete_task 1)
+- /update_task: Update a task by ID (e.g., /update_task 1, New Task, 2023-12-31, 2)
+- /document: Analyze a document with keywords (e.g., /document Sample document text. Keyword1; Keyword2; Keyword3)
+- /feedback: Provide feedback on AI decisions.
+- /upcoming_tasks: List upcoming tasks.
