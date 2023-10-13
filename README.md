@@ -30,28 +30,11 @@ Class Structure:
 - TaskManager: Handles adding, prioritizing, organizing, and retrieving tasks.
 - Task: Represents a single task with name, deadline, and priority.
 
-# Telegram Bot Commands:
-- /start: Start the AI Task Manager.
-- /help: Show available commands.
-- /add_task: Add a new task (Format: /add_task Buy groceries, 2023-12-31, 2)
-- /list_tasks: List all tasks.
-- /delete_task: Delete a task by ID (Format: /delete_task 1)
-- /update_task: Update a task by ID (Format: /update_task 1, New Task, 2023-12-31, 2)
-- /document: Analyze a document with keywords (Format: /document Sample document text. Keyword1; Keyword2; Keyword3)
-- /feedback: Provide feedback on AI decisions.
-- /upcoming_tasks: List upcoming tasks.
-
-To Run:
-```python
-if __name__ == "__main__":
-    main()
-```
-
-Open the Telegram Bot:
+# To Run: Open the Telegram Bot:
 ```python
 t.me/AI_Task_Manager_Bot
 ```
-Use commands:
+# Telegram Bot Commands:
 - /start: Start the AI Task Manager.
 - /help: Show available commands.
 - /add_task: Add a new task (e.g., /add_task Buy groceries, 2023-12-31, 2)
