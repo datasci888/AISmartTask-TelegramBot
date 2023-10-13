@@ -47,7 +47,7 @@ if __name__ == "__main__":
     main()
 ```
 
-Click to open the Telegram Bot:
+Open the Telegram Bot:
 ```python
 t.me/AI_Task_Manager_Bot
 ```
