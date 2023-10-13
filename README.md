@@ -42,8 +42,7 @@ Class Structure:
 - /upcoming_tasks: List upcoming tasks.
 
 To Run:
-'''
-if __name__ == "__main__":
+*
+* if __name__ == "__main__":
 main()
-'''
-'''
+*
