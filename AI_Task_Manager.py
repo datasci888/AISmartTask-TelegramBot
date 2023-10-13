@@ -8,8 +8,7 @@ import matplotlib.pyplot as plt
 from bs4 import BeautifulSoup
 import re
 
-# Initialize the OpenAI API
-openai.api_key = "OPENAI_API_KEY"
+openai.api_key = "Your OpenAI API Key"
 
 class TaskManager:
     def __init__(self):
@@ -30,6 +29,12 @@ class TaskManager:
         # Implement recurring task generation logic based on user input and feedback
         # For example, based on user input like "I want to exercise daily" and feedback like "Make exercising a recurring task."
         pass
+
+    def get_upcoming_tasks(self, days=1):
+        current_time = datetime.datetime.now()
+        end_time = current_time + datetime.timedelta(days=days)
+        upcoming_tasks = [task for task in self.tasks if current_time <= task.deadline <= end_time]
+        return upcoming_tasks
 
 class Task:
     def __init__(self, name, deadline, priority):
@@ -86,6 +91,12 @@ def create_task_time_allocation_visualization(tasks):
     plt.savefig('task_prioritization.png')
     # Alternatively, you can display it using plt.show()
 
+def send_upcoming_task_notifications(context):
+    upcoming_tasks = task_manager.get_upcoming_tasks()
+    if upcoming_tasks:
+        task_list = "\n".join([f"Name: {task.name}, Priority: {task.priority}, Deadline: {task.deadline.strftime('%Y-%m-%d')}" for task in upcoming_tasks])
+        context.bot.send_message(chat_id=context.job.context.effective_chat.id, text="Upcoming tasks:\n" + task_list)
+
 def start(update: Update, context: CallbackContext):
     update.message.reply_text('Hello! I am your AI Task Manager bot. Send /help for available commands.')
 
@@ -94,41 +105,91 @@ def help_command(update: Update, context: CallbackContext):
 Available commands:
 - /start: Start the AI Task Manager.
 - /help: Show available commands.
-- /tasks: List and manage your tasks.
-- /learn: Access interactive learning modules.
+- /add_task: Add a new task (e.g., /add_task Buy groceries, 2023-12-31, 2)
+- /list_tasks: List tasks.
+- /delete_task: Delete a task by ID (e.g., /delete_task 1)
+- /update_task: Update a task by ID (e.g., /update_task 1, New Task, 2023-12-31, 2)
+- /document: Analyze a document with keywords (e.g., /document Sample document text. Keyword1; Keyword2; Keyword3)
 - /feedback: Provide feedback on AI decisions.
+- /upcoming_tasks: List upcoming tasks.
 """
     update.message.reply_text(help_message)
 
-def tasks(update: Update, context: CallbackContext):
-    # Implement task management functionality
-    pass
+def add_task(update: Update, context: CallbackContext):
+    update.message.reply_text("Please provide the task details in the format: Name, Deadline (YYYY-MM-DD), Priority (e.g., Buy groceries, 2023-12-31, 2)")
 
-def web_scrape_articles(document_text, keywords, num_articles):
-    # Implement web scraping to pull relevant articles from a website
-    articles = []
-    # Assuming you have a website with articles related to the document content
-    # Replace this with your actual web scraping logic
-    website_url = "https://example.com/articles"
-    response = requests.get(website_url)
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.text, 'html.parser')
-        article_links = soup.find_all('a', href=True)
-        for link in article_links:
-            article_url = link['href']
-            article_text = requests.get(article_url).text
-            if any(keyword in article_text for keyword in keywords):
-                articles.append(article_url)
-            if len(articles) >= num_articles:
-                break
-    return articles
+def handle_add_task(update: Update, context: CallbackContext):
+    task_info = update.message.text.split(', ')
+    if len(task_info) == 3:
+        task_name, deadline_str, priority_str = task_info
+        try:
+            deadline = datetime.datetime.fromisoformat(deadline_str)
+            priority = int(priority_str)
+            new_task = Task(task_name, deadline, priority)
+            task_manager.add_task(new_task)
+            task_manager.prioritize_tasks()
+            update.message.reply_text("Task added successfully.")
+        except ValueError:
+            update.message.reply_text("Invalid date or priority format. Please use the format: Name, Deadline (YYYY-MM-DD), Priority")
+    else:
+        update.message.reply_text("Invalid task format. Please use the format: Name, Deadline (YYYY-MM-DD), Priority")
 
-def interactive_learning(update: Update, articles):
-    # Implement 'study cells' for interactive learning within the notebook
-    for article in articles:
-        update.message.reply_text(f"Learning from article: {article}")
-        # You can add interactive learning logic here
-        # For example, summarizing key points or asking questions
+def list_tasks(update: Update, context: CallbackContext):
+    task_list = "\n".join([f"ID: {i+1}, Name: {task.name}, Priority: {task.priority}, Deadline: {task.deadline.strftime('%Y-%m-%d')}" for i, task in enumerate(task_manager.tasks)])
+    update.message.reply_text("Your tasks:\n" + task_list)
+
+def delete_task(update: Update, context: CallbackContext):
+    task_id = int(context.args[0]) - 1
+    if 0 <= task_id < len(task_manager.tasks):
+        deleted_task = task_manager.tasks.pop(task_id)
+        update.message.reply_text(f"Task '{deleted_task.name}' deleted successfully.")
+    else:
+        update.message.reply_text("Invalid task ID. Please use /list_tasks to see the task list and provide a valid ID.")
+
+def update_task(update: Update, context: CallbackContext):
+    args = context.args
+    if len(args) != 4:
+        update.message.reply_text("Invalid format. Please use the format: ID, New Name, New Deadline (YYYY-MM-DD), New Priority")
+        return
+
+    task_id = int(args[0]) - 1
+    if 0 <= task_id < len(task_manager.tasks):
+        try:
+            new_name = args[1]
+            new_deadline = datetime.datetime.fromisoformat(args[2])
+            new_priority = int(args[3])
+            task_manager.tasks[task_id].name = new_name
+            task_manager.tasks[task_id].deadline = new_deadline
+            task_manager.tasks[task_id].priority = new_priority
+            task_manager.prioritize_tasks()
+            update.message.reply_text("Task updated successfully.")
+        except (ValueError, IndexError):
+            update.message.reply_text("Invalid date or priority format or task ID. Please use the format: ID, New Name, New Deadline (YYYY-MM-DD), New Priority")
+    else:
+        update.message.reply_text("Invalid task ID. Please use /list_tasks to see the task list and provide a valid ID.")
+
+def document(update: Update, context: CallbackContext):
+    update.message.reply_text("Please provide the document text followed by keywords separated by semicolons (e.g., /document Sample document text. Keyword1; Keyword2; Keyword3)")
+
+def handle_document(update: Update, context: CallbackContext):
+    text_and_keywords = update.message.text.split(' ')
+    if len(text_and_keywords) < 3:
+        update.message.reply_text("Invalid format. Please provide the document text followed by keywords separated by semicolons.")
+        return
+
+    document_text = text_and_keywords[1]
+    keywords = text_and_keywords[2].split(';')
+    document_summary, highlighted_document = document_parser(document_text, keywords)
+    update.message.reply_text("Document Analysis:\n" + document_summary)
+    update.message.reply_text("Highlighted Document:\n" + highlighted_document)
+
+def upcoming_tasks(update: Update, context: CallbackContext):
+    upcoming_tasks = task_manager.get_upcoming_tasks()
+    if upcoming_tasks:
+        task_list = "\n".join([f"Name: {task.name}, Priority: {task.priority}, Deadline: {task.deadline.strftime('%Y-%m-%d')}" for task in upcoming_tasks])
+        update.message.reply_text("Upcoming tasks:\n" + task_list)
+    else:
+        update.message.reply_text("No upcoming tasks.")
 
 def feedback_system(update: Update, context: CallbackContext):
     update.message.reply_text("Please provide feedback on AI decisions.")
@@ -141,41 +202,24 @@ def handle_feedback(update: Update, context: CallbackContext):
     update.message.reply_text("Thank you for your feedback!")
 
 def main():
-    updater = Updater("BOT_TOKEN")
+    global task_manager
+    task_manager = TaskManager()
+
+    global updater
+    updater = Updater("Your Telegram Bot Token")
     dp = updater.dispatcher
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("help", help_command))
-    dp.add_handler(CommandHandler("tasks", tasks))
-    dp.add_handler(CommandHandler("feedback", feedback_system))
+    dp.add_handler(CommandHandler("add_task", add_task))
+    dp.add_handler(CommandHandler("list_tasks", list_tasks))
+    dp.add_handler(CommandHandler("delete_task", delete_task, pass_args=True))
+    dp.add_handler(CommandHandler("update_task", update_task, pass_args=True))
+    dp.add_handler(CommandHandler("document", document))
     dp.add_handler(MessageHandler(Filters.text & Filters.command, handle_feedback))
-
-    task_manager = TaskManager()
-
-    # Assuming you have tasks without the need for Google Calendar integration
-    task1 = Task("Task 1", datetime.datetime(2023, 12, 31), 2)
-    task2 = Task("Task 2", datetime.datetime(2023, 12, 15), 1)
-    task_manager.add_task(task1)
-    task_manager.add_task(task2)
-
-    task_manager.prioritize_tasks()
-    task_manager.organize_tasks()
-
-    for task in task_manager.tasks:
-        # Perform actions based on tasks
-        print(f"Task: {task.name}, Priority: {task.priority}, Deadline: {task.deadline}")
-
-    # Document Parsing and Analysis
-    document_text = "Sample document text goes here."
-    keywords = ["important", "task", "deadline"]
-    document_summary, highlighted_document = document_parser(document_text, keywords)
-    print("Document Analysis:\n" + document_summary)
-
-    # Data Visualization
-    create_task_time_allocation_visualization(task_manager.tasks)
-
-    # Learning & Productivity Modules
-    articles = web_scrape_articles(document_text, keywords, num_articles=3)
-    interactive_learning(update, articles)
+    dp.add_handler(CommandHandler("upcoming_tasks", upcoming_tasks))
+    
+    job_queue = updater.job_queue
+    job_queue.run_repeating(send_upcoming_task_notifications, interval=3600, context=updater)
 
     updater.start_polling()
     updater.idle()
