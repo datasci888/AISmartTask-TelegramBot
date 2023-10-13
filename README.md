@@ -4,7 +4,7 @@ Openinterpreter hackathon
 <img width="1087" alt="Screen Shot 2023-10-13 at 11 13 36 AM" src="https://github.com/datasci888/openinterpreter/assets/119770980/9742e0fd-db80-4c27-8270-c65c45b7e74e">
 
 # AISmartTaskTask
-AI-powered task manager with notifications, document analysis, and task visualization developed using Open interpreter tool. 
+AI-powered task manager with notifications, document analysis, and task visualization developed using Open Interpreter tool. 
 
 # Features:
 - Task prioritization
