@@ -5,8 +5,8 @@ from moviepy.editor import AudioFileClip
 import concurrent.futures
 
 # Initialize OpenAI and Telegram API tokens
-openai.api_key = "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"
-TELEGRAM_API_TOKEN = "6432141709:AAEnyt3zns3yL8F2fsnKh85C4RZmoOiqKV4"
+openai.api_key = "openai_api_key"
+TELEGRAM_API_TOKEN = "telegram_bot_token"
 
 # Create a list to store the conversation history
 conversation = []
